@@ -1,0 +1,33 @@
+node_modules/
+dist/
+__pycache__/
+.venv/
+.angular/
+.env
+*.sqlite3
+.railway/
+media/
+
+# Local builds and tooling
+bin/
+obj/
+target/
+.pytest_cache/
+*.dll
+*.exe
+*.obj
+*.lib
+*.exp
+models/
+data/
+.tools/
+.test-tmp/
+
+# Keep local research captures and credentials private
+.env.*
+!.env.example
+*.pem
+*.key
+docs/*-capture-web-screenshot.json
+docs/*-inspect-web-page.json
+docs/*-list-browser-targets.json
