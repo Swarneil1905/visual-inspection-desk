@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(image_quality LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+add_library(image_quality SHARED quality.cpp)
+add_executable(quality_test test_quality.cpp)
+target_link_libraries(quality_test PRIVATE image_quality)
+enable_testing()
+add_test(NAME image_quality_contract COMMAND quality_test)
