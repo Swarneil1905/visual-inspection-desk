@@ -1,0 +1,14 @@
+name: visual-inspection-desk
+services:
+  web:
+    build: ./frontend
+    ports: ["127.0.0.1:8081:8080"]
+    depends_on: [api]
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8001
+    restart: unless-stopped
