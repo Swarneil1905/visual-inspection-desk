@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.angular
+**/bin
+**/obj
+**/target
+**/__pycache__
+**/.venv
+**/*.exe
+**/*.dll
+**/.env
+.git
