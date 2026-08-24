@@ -17,7 +17,12 @@ builder.Services.AddRateLimiter(o => { o.RejectionStatusCode = 429; o.AddConcurr
 builder.Services.AddSingleton<DefectModel>();
 var app = builder.Build(); app.UseRateLimiter();
 app.Use(async (ctx, next) => { ctx.Response.Headers.CacheControl = "no-store"; ctx.Response.Headers.XContentTypeOptions = "nosniff"; try { await next(); } catch (BadHttpRequestException e) { ctx.Response.StatusCode = e.StatusCode; await ctx.Response.WriteAsJsonAsync(new { error = "Request is too large or invalid." }); } catch (InvalidDataException) { ctx.Response.StatusCode = 400; await ctx.Response.WriteAsJsonAsync(new { error = "Invalid multipart image upload." }); } });
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok", service = "visual-inspection-desk" }));
+app.MapGet("/api/health", () => {
+    try {
+        if (NativeQuality.Measure(new byte[27], 3, 3, 27, out _) != 0) throw new InvalidOperationException();
+        return Results.Json(new { status = "ok", service = "visual-inspection-desk" });
+    } catch { return Results.Json(new { status = "unavailable", service = "visual-inspection-desk" }, statusCode: 503); }
+});
 app.MapPost("/api/inspection/quality", async (HttpRequest request, DefectModel model) =>
 {
     if (!request.HasFormContentType) return Results.BadRequest(new { error = "Upload a multipart form with an image field." });

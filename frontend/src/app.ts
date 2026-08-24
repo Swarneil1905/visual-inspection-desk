@@ -28,7 +28,7 @@ import { DesignComponent } from "./design";
           >Design & system notes</a
         >
       </nav>
-      <span class="design-link">LOCAL EDITION</span>
+      <span class="design-link">PORTFOLIO DEMO</span>
     </header>
     <main id="workspace" tabindex="-1">
       @if (notes()) {
@@ -39,7 +39,7 @@ import { DesignComponent } from "./design";
     </main>
     <footer class="global-footer">
       <span>Built by Swarneil Pradhan</span
-      ><span>Original interface · Local development</span
+      ><span>Original interface · Public demo</span
       ><a href="#design" (click)="notes.set(true)">Research & implementation</a>
     </footer>`,
 })
