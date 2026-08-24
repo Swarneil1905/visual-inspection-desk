@@ -1,0 +1,53 @@
+name: Local code verification
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+  inspection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: cmake -S native -B native/build && cmake --build native/build && ctest --test-dir native/build --output-on-failure
+      - run: dotnet build api/Inspection.Api.csproj -c Release
+      - run: pip install httpx pillow pytest
+      - name: Verify the HTTP and native boundary
+        run: |
+          export LD_LIBRARY_PATH="$PWD/native/build"
+          dotnet api/bin/Release/net10.0/Inspection.Api.dll > api-test.log 2>&1 &
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:8001/api/health && break || sleep 1; done
+          pytest tests -q
+  model-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r ml/requirements.txt
+      - run: pytest ml -q
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+      - run: docker compose build
