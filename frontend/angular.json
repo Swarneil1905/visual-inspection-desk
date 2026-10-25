@@ -18,7 +18,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css"],
+            "styles": [
+              "src/styles.css"
+            ],
             "outputPath": "dist/studio"
           },
           "configurations": {
@@ -30,7 +32,15 @@
                   "maximumWarning": "600kB",
                   "maximumError": "900kB"
                 }
-              ]
+              ],
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": false
+              }
             },
             "development": {
               "optimization": false,

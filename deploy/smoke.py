@@ -22,6 +22,7 @@ status, body, headers = request("/healthz")
 assert status == 200 and json.loads(body)["status"] == "ok", (status, body)
 status, body, headers = request("/")
 assert status == 200 and b"<app-root" in body
+assert b'onload=' not in body, "Styles must load without CSP-blocked inline event handlers"
 assert headers.get("X-Frame-Options") == "DENY"
 assert "frame-ancestors 'none'" in headers.get("Content-Security-Policy", "")
 if kind == "voice-practice-coach":
