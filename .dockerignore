@@ -10,3 +10,15 @@
 **/*.dll
 **/.env
 .git
+
+**/.tools
+**/.env.*
+**/.pytest_cache
+**/.test-tmp
+**/.java-tmp
+**/models
+**/data
+**/*-capture-web-screenshot.json
+**/*-inspect-web-page.json
+**/*-list-browser-targets.json
+**/*.sqlite3

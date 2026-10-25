@@ -1,0 +1,13 @@
+{
+  "sourceBranch": "production",
+  "dockerfilePath": "Dockerfile",
+  "healthcheckPath": "/healthz",
+  "healthcheckTimeout": 120,
+  "sleepApplication": true,
+  "limits": {
+    "memoryGB": 0.5,
+    "vCPUs": 1
+  },
+  "restartPolicyType": "ON_FAILURE",
+  "restartPolicyMaxRetries": 3
+}

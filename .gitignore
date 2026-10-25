@@ -31,3 +31,5 @@ data/
 docs/*-capture-web-screenshot.json
 docs/*-inspect-web-page.json
 docs/*-list-browser-targets.json
+
+.demo-data/

@@ -1,33 +1,31 @@
-# Architecture and operating boundaries
+# Production architecture
 
-This is a local single-user implementation. The Docker entry point binds only to 127.0.0.1:8081. It does not implement public account registration or tenant isolation. Public hosting is deferred.
+Angular and Nginx proxy to a .NET API in the same container. The API calls the native C++ image library and optionally loads an ONNX model. Images remain in memory and JSON exports omit image bytes. There is no trained production defect model bundled with the application.
 
-## Request path
+## Public gateway
 
-Angular browser application -> Nginx same-origin /api proxy -> application API. Recommendation requests also call a private Go ranker. Inspection requests call the C++ library through P/Invoke and optionally an ONNX model. Voice rooms use LiveKit directly after a server-issued token and consent.
+Railway terminates HTTPS and routes to Nginx on port 8080. Backend ports bind to loopback. The gateway permits two API requests per second per client with a burst of 12, plus a shared 20 requests per second limit and six concurrent API connections. Railway's edge supplies X-Real-IP. The gateway overwrites the client address and scheme passed to Django. This trust model is specific to the Railway edge; do not expose the container directly to the internet without an equivalent trusted proxy.
 
-## TTL and bounded work
+The apps are public portfolio demos, without accounts or tenant storage. The gateway sets a content security policy, frame protection, MIME protection and a permissions policy. Uploads are capped at 11 MB at the gateway and 10 MB per image in the API. Requests and images are not included in access logs. Public rate limits reduce accidental or casual abuse; they are not a substitute for a workspace spending cap.
 
-| Boundary | Limit | Behavior |
-| --- | --- | --- |
-| Go ranking cache | 30 seconds, 256 entries | Key includes query, saved IDs and full catalog descriptions. Java applies current stock, budget and category after ranking. |
-| Java ranking request | 2 second connect, 3 second request | Returns an explicit 503 on unavailable ranking. No fabricated ranking fallback. |
-| Voice join token | 2 minutes | Limits joining. It does not end an active call. |
-| Voice session | 480 seconds | Browser disconnect plus independent worker closure and room deletion. |
-| Voice token issuance | 3 per hour per API-observed IP | In-memory limit for one API process. Restarts clear it. |
-| Text review | 30 per minute per API-observed IP | In-memory limit for one API process. |
-| AI review provider | 30 seconds, 600 output tokens | HTTPS only; failure returns 502. |
-| Image upload | 10 MB, 20 megapixels | Reject before full decoding where possible; two concurrent requests. |
-| Browser catalog request | Latest result wins | Earlier responses cannot overwrite a later search. |
+## Bounded work
 
-## Data retention
+- Voice: 120 second join tokens, 480 second sessions, three token requests per hour per observed IP.
+- Paid shared allowances: 10 voice sessions per UTC month, three per day, with two 600 second reservations at once; 100 AI reviews per UTC month, 20 per day. SQLite transactions prevent concurrent requests from exceeding the allowance. Failed provider calls consume an allowance. Counters survive voice API restarts on its volume.
+- AI review: 30 second provider timeout, 600 output tokens, explicit consent.
+- Inspection: 20 megapixels, two concurrent image operations, optional model abstention.
+- Ranking: 30 second cache TTL, 256 entries, a 3 second Java request timeout. Cache entries include the full ranking input; current stock is still checked by Java.
 
-No user account database is required. Voice/text answers and uploaded photographs are not persisted by application code. Optional external speech and AI providers have their own retention policies. Saved catalog IDs use browser localStorage. Inspection records are downloaded by the user as JSON. The sample catalog is stored in api/catalog.json. Application logs must not contain request bodies or credentials.
+Only the boundaries used by this application apply. Each web app runs one replica with a 512 MB memory limit. The voice worker has a 768 MB limit and no idle job process pool. Web apps can sleep when inactive; the connected voice worker stays awake. These are resource limits, not a guaranteed monthly bill.
 
-## Scaling and load balancing
+## Health and process lifecycle
 
-Nginx currently proxies one API process. This is an intentional local topology, not a deployed load-balanced cluster. Before adding Railway replicas, use authenticated users, shared rate limiting, a canonical inventory store and deployment secrets. Railway can distribute HTTP traffic among replicas; no custom load balancer is required for this budget. LiveKit handles WebRTC media; it should not be proxied through an ordinary HTTP load balancer.
+`/healthz` checks the API through Nginx. Inspection health verifies native interop; recommendation health verifies inventory and ranking. If a required process exits, the container supervisor terminates the remaining processes and exits so Railway can restart it. Railway allows three restart retries. No unhealthy deployment is promoted by its health check.
 
-## CI and future delivery
+## CI/CD
 
-.github/workflows/ci.yml defines test, frontend build and container build checks. Local test results are recorded separately from GitHub Actions runs. There is no automatic deployment workflow. A future Railway release should require an explicit approval, configured provider budgets and a successful health check. Do not expose this local edition publicly with its current single-user controls.
+GitHub Actions tests the source, builds the frontends and containers, starts the production image and exercises real HTTP flows. Only after every required job succeeds does the publish job advance the `production` branch to the tested commit. It checks that the commit is still the newest main commit. Railway follows `production`, so failed tests leave the live source unchanged. Pull requests cannot publish.
+
+The source branch and service settings are recorded in `deploy/railway-settings.json`. That file documents the applied platform settings; Railway does not execute it. Settings are configured through the Railway API. Legacy railway.json configuration is not used.
+
+Before adding replicas, move per-client limits to shared storage, provide appropriate accounts for any private data, and revisit quotas and inventory persistence. Railway supplies edge routing; a separate paid load balancer is unnecessary for this single-replica demo.

@@ -1,5 +1,9 @@
-name: Local code verification
-on: [push, pull_request, workflow_dispatch]
+name: Verify and package
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -51,3 +55,51 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
       - run: docker compose build
+
+  production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -t portfolio-demo .
+      - name: Start production stack
+        run: >-
+          docker run -d --name portfolio-demo -p 8080:8080
+          -e DJANGO_DEBUG=true -e TRUST_LOCAL_PROXY=true -e PUBLIC_SCHEME=http
+          -e CSRF_TRUSTED_ORIGINS=http://localhost:8080
+          portfolio-demo
+      - name: Wait for dependency health
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/healthz; then exit 0; fi
+            sleep 2
+          done
+          docker logs portfolio-demo
+          exit 1
+      - name: Verify the public request path
+        run: python3 deploy/smoke.py http://localhost:8080
+      - name: Container logs
+        if: always()
+        run: docker logs portfolio-demo
+
+  publish:
+    needs: ["frontend", "inspection", "model-contract", "containers", "production"]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: production-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Promote the verified commit for Railway
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "A newer commit is being verified; leave production unchanged."
+            exit 0
+          fi
+          git push origin HEAD:refs/heads/production

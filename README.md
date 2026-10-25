@@ -138,7 +138,7 @@ The synthetic image at `tests/fixtures/calibration.png` is a quality test fixtur
 | `tests/` | HTTP integration tests and a synthetic image fixture |
 | `docs/` | Architecture, design provenance and verification details |
 
-This is a local review tool. Real dataset validation, authentication and production deployment remain separate work. Railway deployment is not configured.
+The public demo uses bounded uploads and a rate limited gateway. Representative dataset validation remains required for meaningful defect predictions. See [deployment and operations](docs/deployment.md).
 
 ## License
 
