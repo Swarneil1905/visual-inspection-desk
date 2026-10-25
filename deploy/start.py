@@ -30,6 +30,7 @@ else:
     commands = [["/app/ranker"], ["java", "-Xms32m", "-Xmx192m", "-XX:ActiveProcessorCount=2", "-jar", "/app/api/catalog.jar"]]
 config = Path("/app/deploy/nginx.conf").read_text().replace("PUBLIC_SCHEME", os.getenv("PUBLIC_SCHEME", "https"))
 Path("/tmp/demo-nginx.conf").write_text(config)
+subprocess.run(["nginx", "-t", "-c", "/tmp/demo-nginx.conf"], check=True)
 commands.append(["nginx", "-c", "/tmp/demo-nginx.conf", "-g", "daemon off;"])
 processes = []
 stopping = False

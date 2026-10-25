@@ -72,6 +72,10 @@ jobs:
         run: |
           for attempt in $(seq 1 60); do
             if curl -fsS http://localhost:8080/healthz; then exit 0; fi
+            if [ "$(docker inspect -f '{{.State.Running}}' portfolio-demo)" != "true" ]; then
+              docker logs portfolio-demo
+              exit 1
+            fi
             sleep 2
           done
           docker logs portfolio-demo
