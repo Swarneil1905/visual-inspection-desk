@@ -2,7 +2,7 @@
 
 Review product return photographs, check whether the images are usable, and export a structured inspection record. An optional trained model can add a defect prediction alongside the human review.
 
-[CI](https://github.com/Swarneil1905/visual-inspection-desk/actions) · [Architecture](docs/architecture.md) · [Verification notes](docs/verification.md) · [MIT license](LICENSE)
+[Live demo](https://visual-inspection-desk-production.up.railway.app) · [CI](https://github.com/Swarneil1905/visual-inspection-desk/actions) · [Architecture](docs/architecture.md) · [Verification notes](docs/verification.md) · [MIT license](LICENSE)
 
 ## What you can do
 
