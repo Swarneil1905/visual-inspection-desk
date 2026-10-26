@@ -1,22 +1,35 @@
 # Visual Inspection Desk
 
-Review product return photographs, check whether the images are usable, and export a structured inspection record. An optional trained model can add a defect prediction alongside the human review.
+A workspace for reviewing product return photographs. Check image quality, document visible issues, choose a disposition and export a review record that another person can inspect.
 
-The root URL opens the product homepage. Choose the main action to enter the application at `/workspace`. The homepage explains the workflow, data handling, and current capabilities before a session begins.
+[Open the app](https://visual-inspection-desk-production.up.railway.app) · [GitHub Actions](https://github.com/Swarneil1905/visual-inspection-desk/actions) · [MIT license](LICENSE)
 
-[Live demo](https://visual-inspection-desk-production.up.railway.app) · [CI](https://github.com/Swarneil1905/visual-inspection-desk/actions) · [Architecture](docs/architecture.md) · [Verification notes](docs/verification.md) · [MIT license](LICENSE)
+## Watch the walkthrough
 
-Add up to 10 photographs to a review queue, zoom each image, record observations and choose a decision. Completed reviews can be exported together as JSON. Photos and drafts stay in the current tab and are cleared when it closes.
+[![Visual Inspection Desk walkthrough: check a photograph, record observations and export a review](docs/assets/walkthrough.gif)](docs/assets/walkthrough.mp4)
 
-## What you can do
+[Watch or download the full video](docs/assets/walkthrough.mp4) (00:00:24.20) · [View a still screenshot](docs/assets/preview.png). This silent recording uses the built in sample photograph and the live image quality API. The inspection decision is made by the reviewer.
 
-- Upload a JPEG, PNG or WebP photograph and inspect it alongside image quality measurements.
-- Check brightness, edge detail and resolution before making an assessment.
-- Record visible observations and reviewer notes.
-- Export the review as JSON without embedding the photograph.
-- Optionally load a validated ONNX model for a damaged or intact prediction, with abstention when the evidence is insufficient.
+## Try it in a minute
 
-The default workflow is image quality measurement plus human review. No trained defect model or representative training dataset is included. Image quality measurements do not establish whether a product is damaged.
+1. Open the homepage and choose the sample inspection, or upload your own JPEG, PNG or WebP image.
+2. Review resolution, exposure and edge detail beside the photograph.
+3. Record what you can see, choose a decision and add a note.
+4. Complete the review and select **Export reviews** to download the JSON records.
+
+The sample is an illustrative image, not a labeled training example. Quality measurements help decide whether a photograph is usable; they do not establish whether a product is damaged.
+
+## Current capabilities
+
+| Feature | Behavior |
+| --- | --- |
+| Review queue | Up to 10 photographs in the current tab |
+| Quality checks | Resolution, brightness and edge detail measured by the API and native engine |
+| Human review | Observations, notes and accept, reject, escalate or retake decisions |
+| Export | Completed JSON records without embedding photographs |
+| Optional model | ONNX inference with validation checks and abstention support |
+
+No validated defect model is loaded in the public app. Automated defect detection requires representative labeled images and validation. Photos and drafts stay in the current browser session; uploads are processed in server memory and are not saved by the API.
 
 ## How it works
 
@@ -143,6 +156,14 @@ The synthetic image at `tests/fixtures/calibration.png` is a quality test fixtur
 | `docs/` | Architecture and verification details |
 
 The public demo uses bounded uploads and a rate limited gateway. Representative dataset validation remains required for meaningful defect predictions. See [deployment and operations](docs/deployment.md).
+
+## Deployment and availability
+
+The homepage is at `/`; the product workspace is at `/workspace`. The public Railway service uses sleep mode to reduce idle hosting costs. The first visit after inactivity can take longer while the service starts. Public requests are rate limited.
+
+GitHub Actions checks frontend and backend code, builds the containers, tests the public HTTP path, and verifies both process failure handling and a clean Docker shutdown. Only a verified current `main` commit is promoted to the `production` branch that Railway deploys. A normal platform stop exits successfully; an unexpected required process exit fails the container.
+
+See [deployment and operations](docs/deployment.md) for configuration and rollback, and [architecture](docs/architecture.md) for the service boundaries.
 
 ## License
 
