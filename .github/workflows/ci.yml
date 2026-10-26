@@ -60,6 +60,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify process lifecycle
+        run: python3 -m unittest discover -s deploy -p 'test_*.py' -v
       - name: Build production image
         run: docker build -t portfolio-demo .
       - name: Start production stack
@@ -82,6 +84,10 @@ jobs:
           exit 1
       - name: Verify the public request path
         run: python3 deploy/smoke.py http://localhost:8080
+      - name: Verify graceful container shutdown
+        run: |
+          docker stop --time 15 portfolio-demo
+          test "$(docker inspect -f '{{.State.ExitCode}}' portfolio-demo)" = "0"
       - name: Container logs
         if: always()
         run: docker logs portfolio-demo

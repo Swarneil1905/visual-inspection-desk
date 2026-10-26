@@ -1,9 +1,8 @@
 """Start the API and gateway together; exit the container if either fails."""
 import os
-import signal
 import subprocess
-import time
 from pathlib import Path
+from supervisor import supervise
 
 os.umask(0o077)
 kind = "visual-inspection-desk"
@@ -30,31 +29,6 @@ else:
     commands = [["/app/ranker"], ["java", "-Xms32m", "-Xmx192m", "-XX:ActiveProcessorCount=2", "-jar", "/app/api/catalog.jar"]]
 config = Path("/app/deploy/nginx.conf").read_text().replace("PUBLIC_SCHEME", os.getenv("PUBLIC_SCHEME", "https"))
 Path("/tmp/demo-nginx.conf").write_text(config)
-subprocess.run(["nginx", "-t", "-c", "/tmp/demo-nginx.conf"], check=True)
+subprocess.run(["nginx", "-t", "-q", "-c", "/tmp/demo-nginx.conf"], check=True)
 commands.append(["nginx", "-c", "/tmp/demo-nginx.conf", "-g", "daemon off;"])
-processes = []
-stopping = False
-
-def stop(*_):
-    global stopping
-    stopping = True
-    for process in processes:
-        if process.poll() is None:
-            process.terminate()
-
-signal.signal(signal.SIGTERM, stop)
-signal.signal(signal.SIGINT, stop)
-try:
-    for command in commands:
-        processes.append(subprocess.Popen(command))
-    while not stopping and all(p.poll() is None for p in processes):
-        time.sleep(0.5)
-finally:
-    stop()
-    deadline = time.monotonic() + 8
-    for process in processes:
-        try:
-            process.wait(timeout=max(0.1, deadline - time.monotonic()))
-        except subprocess.TimeoutExpired:
-            process.kill()
-raise SystemExit(1)
+raise SystemExit(supervise(commands))
