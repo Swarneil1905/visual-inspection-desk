@@ -154,7 +154,7 @@ export class InspectionComponent implements OnDestroy {
       row.busy ||
       !row.name.trim() ||
       !row.decision ||
-      !row.observations.length
+      (!row.observations.length && row.decision !== "retake")
     )
       return;
     row.reviewedAt = new Date().toISOString();

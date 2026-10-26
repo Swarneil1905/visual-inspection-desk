@@ -229,7 +229,7 @@
         </section>
         <button
           class="primary complete-button"
-          [disabled]="!row.quality || row.busy || !row.name.trim() || !row.decision || !row.observations.length || !!row.reviewedAt"
+          [disabled]="!row.quality || row.busy || !row.name.trim() || !row.decision || (!row.observations.length && row.decision !== 'retake') || !!row.reviewedAt"
           (click)="complete(row)"
         >
           <app-icon name="check" />{{row.reviewedAt ? 'Review completed' :
