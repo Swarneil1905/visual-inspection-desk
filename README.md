@@ -4,6 +4,8 @@ Review product return photographs, check whether the images are usable, and expo
 
 [Live demo](https://visual-inspection-desk-production.up.railway.app) · [CI](https://github.com/Swarneil1905/visual-inspection-desk/actions) · [Architecture](docs/architecture.md) · [Verification notes](docs/verification.md) · [MIT license](LICENSE)
 
+Add up to 10 photographs to a review queue, zoom each image, record observations and choose a decision. Completed reviews can be exported together as JSON. Photos and drafts stay in the current tab and are cleared when it closes.
+
 ## What you can do
 
 - Upload a JPEG, PNG or WebP photograph and inspect it alongside image quality measurements.

@@ -1,0 +1,260 @@
+<div class="inspection-app">
+  <header class="desk-header">
+    <a class="desk-brand" href="/"
+      ><span class="brand-frame"><app-icon name="scan" /></span>Inspection<span
+        class="brand-light"
+        >Desk</span
+      ></a
+    ><span class="workspace-label">IMAGE REVIEW WORKSPACE</span
+    ><button class="primary" (click)="download()" [disabled]="reviewed() === 0">
+      <app-icon name="download" />Export reviews<span class="button-count"
+        >{{reviewed()}}</span
+      >
+    </button>
+  </header>
+  <div class="desk-strip">
+    <span
+      ><i class="status-dot"></i>Manual review
+      <span class="strip-divider">/</span> Image quality checks</span
+    ><span>Session only <app-icon name="info" /></span>
+  </div>
+  <div class="desk-layout">
+    <aside class="queue">
+      <div class="panel-heading">
+        <h2>Review queue</h2>
+        <span>{{entries().length}} / 10</span>
+      </div>
+      <label class="upload-button"
+        ><app-icon name="plus" />Add images<input
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp"
+          (change)="onFile($event)"
+          aria-label="Add images to review queue"
+      /></label>
+      <div class="queue-items">
+        @for(row of entries(); track row.id; let i = $index){<button
+          class="queue-item"
+          [class.active]="activeId() === row.id"
+          (click)="select(row.id)"
+        >
+          <img [src]="row.url" alt="" /><span
+            ><strong>{{row.file.name}}</strong
+            ><small [class.done]="row.reviewedAt"
+              >{{row.reviewedAt ? 'Reviewed' : row.busy ? 'Checking...' : 'Needs
+              review'}}</small
+            ></span
+          ><span class="queue-number">{{i+1}}</span></button
+        >} @if(!entries().length){
+        <div class="queue-empty">
+          <span class="queue-outline"></span>
+          <p>No images yet</p>
+          <small>Add up to 10 photographs to start a review session.</small>
+        </div>
+        }
+      </div>
+      <div class="queue-footer">
+        <div>
+          <span>Completed</span
+          ><strong>{{reviewed()}} / {{entries().length}}</strong>
+        </div>
+        <progress
+          [value]="reviewed()"
+          [max]="entries().length || 1"
+          aria-label="Reviews completed"
+        ></progress>
+        <p>
+          Export before leaving. Photos and drafts are cleared when this page
+          closes.
+        </p>
+      </div>
+    </aside>
+    <section
+      class="viewer"
+      (dragover)="$event.preventDefault()"
+      (drop)="drop($event)"
+    >
+      <div class="viewer-toolbar">
+        <span>{{active()?.file?.name || 'Image workspace'}}</span>
+        <div class="zoom-controls">
+          <button
+            aria-label="Zoom out"
+            (click)="changeZoom(-.25)"
+            [disabled]="!active() || zoom() <= .5"
+          >
+            −</button
+          ><button
+            (click)="zoom.set(1)"
+            [disabled]="!active()"
+            aria-label="Reset image zoom"
+          >
+            {{(zoom()*100).toFixed(0)}}%</button
+          ><button
+            aria-label="Zoom in"
+            (click)="changeZoom(.25)"
+            [disabled]="!active() || zoom() >= 3"
+          >
+            +
+          </button>
+        </div>
+      </div>
+      <div class="image-canvas" [class.has-image]="!!active()">
+        @if(active(); as row){
+        <div class="image-scroll">
+          <img
+            [src]="row.url"
+            [alt]="'Review photograph: ' + row.name"
+            [style.width.%]="zoom()*100"
+          />
+        </div>
+        <div class="canvas-caption">
+          <span
+            >{{row.quality ? row.quality.width + ' x ' + row.quality.height + '
+            px' : 'Original photograph'}}</span
+          ><span
+            >{{row.reviewedAt ? 'REVIEW COMPLETE' : 'AWAITING DECISION'}}</span
+          >
+        </div>
+        } @else{
+        <div class="drop-content">
+          <div class="scan-reticle"><app-icon name="scan" /></div>
+          <span class="eyebrow">A CLOSER LOOK STARTS HERE</span>
+          <h1>Bring the evidence<br />into focus.</h1>
+          <p>
+            Drop product photographs here to check image quality and document
+            your decision.
+          </p>
+          <label class="primary upload-button"
+            ><app-icon name="upload" />Choose photographs<input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onFile($event)"
+              aria-label="Choose inspection photographs" /></label
+          ><small>JPEG, PNG, WebP · Up to 10 MB per image</small>
+        </div>
+        }
+      </div>
+      <div class="viewer-bottom">
+        <app-icon name="info" />
+        <p>
+          Quality checks measure resolution, exposure and edge detail. You make
+          the defect decision.
+        </p>
+      </div>
+      @if(error()){
+      <p class="error" role="alert">{{error()}}</p>
+      } @if(notice()){
+      <p class="success" role="status">{{notice()}}</p>
+      }
+    </section>
+    <aside class="review-sidebar">
+      <div class="panel-heading">
+        <h2>Inspection record</h2>
+        <span class="record-state"
+          >{{active()?.reviewedAt ? 'COMPLETE' : 'DRAFT'}}</span
+        >
+      </div>
+      @if(active(); as row){
+      <div class="record-fields">
+        <label for="item-name">Item name</label
+        ><input
+          id="item-name"
+          [(ngModel)]="row.name"
+          (ngModelChange)="dirty(row)"
+          maxlength="120"
+        />
+        <section class="check-section">
+          <h3><span>01</span>Image quality</h3>
+          @if(row.busy){
+          <p class="muted" role="status">Checking image quality...</p>
+          } @for(c of row.quality?.checks || []; track c.label){
+          <div class="quality-check">
+            <app-icon
+              [name]="c.passed ? 'check' : 'info'"
+              [class.passed]="c.passed"
+            />
+            <div>
+              <strong>{{c.label}}</strong>
+              <p>{{c.detail}}</p>
+            </div>
+          </div>
+          } @if(row.error){
+          <p class="error" role="alert">{{row.error}}</p>
+          <button
+            class="secondary"
+            (click)="analyze(row)"
+            [disabled]="row.busy"
+          >
+            Retry quality check</button
+          >} @if(row.quality?.prediction?.label){
+          <div class="model-result">
+            <strong>Model suggestion: {{row.quality!.prediction.label}}</strong>
+            <p>{{row.quality!.prediction.detail}}</p>
+          </div>
+          }
+        </section>
+        <section class="check-section">
+          <h3><span>02</span>Visible observations</h3>
+          @for(label of observations; track label){<label class="checkbox-row"
+            ><input
+              type="checkbox"
+              [checked]="row.observations.includes(label)"
+              (change)="toggle(row,label)"
+            /><span>{{label}}</span></label
+          >}
+        </section>
+        <section class="check-section">
+          <h3><span>03</span>Review decision</h3>
+          <label class="sr-only" for="decision">Review decision</label
+          ><select
+            id="decision"
+            [(ngModel)]="row.decision"
+            (ngModelChange)="dirty(row)"
+          >
+            <option value="">Select a decision</option>
+            <option value="accept">Accept item</option>
+            <option value="reject">Reject item</option>
+            <option value="escalate">Escalate for another review</option>
+            <option value="retake">Request new photograph</option></select
+          ><label for="inspection-notes">Notes</label
+          ><textarea
+            id="inspection-notes"
+            [(ngModel)]="row.notes"
+            (ngModelChange)="dirty(row)"
+            rows="3"
+            maxlength="2000"
+            placeholder="Location of damage, next action, or reviewer context"
+          ></textarea>
+        </section>
+        <button
+          class="primary complete-button"
+          [disabled]="!row.quality || row.busy || !row.name.trim() || !row.decision || !row.observations.length || !!row.reviewedAt"
+          (click)="complete(row)"
+        >
+          <app-icon name="check" />{{row.reviewedAt ? 'Review completed' :
+          'Complete review'}}</button
+        ><button class="remove-button" (click)="remove(row)">
+          Remove this image
+        </button>
+        <p class="privacy">
+          Images are processed in memory, not saved on the server. No validated
+          defect model is loaded unless explicitly configured.
+        </p>
+      </div>
+      }@else{
+      <div class="record-empty">
+        <app-icon name="book" />
+        <h3>Every decision needs a record.</h3>
+        <p>
+          Select an image to see its quality checks, add observations and record
+          a decision.
+        </p>
+        <div class="empty-step"><span>1</span>Check the photograph</div>
+        <div class="empty-step"><span>2</span>Document what you see</div>
+        <div class="empty-step"><span>3</span>Decide and export</div>
+      </div>
+      }
+    </aside>
+  </div>
+</div>
