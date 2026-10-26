@@ -1,0 +1,199 @@
+<a class="skip-link" [href]="skipHref">Skip to content</a> @if(workspace){
+<main id="main"><inspection-desk /></main>
+}@else{
+<div class="home inspection-home">
+  <header class="site-header wrap">
+    <a class="wordmark" href="/" aria-label="Inspection Desk home"
+      ><span class="inspection-mark"><app-icon name="scan" /></span
+      >Inspection<span>Desk</span></a
+    ><button
+      class="menu-toggle"
+      (click)="menu.set(!menu())"
+      [attr.aria-expanded]="menu()"
+      aria-controls="home-nav"
+    >
+      {{menu() ? 'Close' : 'Menu'}}<app-icon name="grid" />
+    </button>
+    <nav id="home-nav" aria-label="Main navigation" [class.open]="menu()">
+      <a href="#product" (click)="menu.set(false)">Workspace</a
+      ><a href="#how-it-works" (click)="menu.set(false)">Workflow</a
+      ><a href="#questions" (click)="menu.set(false)">Questions</a
+      ><a class="nav-cta" href="/workspace"
+        >Open inspection desk<app-icon name="arrow"
+      /></a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="inspection-hero wrap" id="product">
+      <div class="hero-copy">
+        <p class="overline"><span></span>IMAGE REVIEW / HUMAN JUDGMENT</p>
+        <h1>Every image.<br /><em>A clear decision.</em></h1>
+        <p class="hero-description">
+          Check the photograph. Inspect the details. Record your decision. A
+          focused workspace for reviewing product images and keeping a
+          consistent review record.
+        </p>
+        <div class="cta-row">
+          <a class="button solid" href="/workspace"
+            >Start an inspection<app-icon name="arrow" /></a
+          ><a class="button quiet" href="/workspace?sample=1"
+            >Try a sample image</a
+          >
+        </div>
+        <p class="hero-note">
+          JPEG, PNG, or WebP. Up to 10 images per session.
+        </p>
+      </div>
+      <div class="inspection-preview">
+        <div class="preview-toolbar">
+          <span><app-icon name="scan" />bracket_sample.png</span
+          ><span>EXAMPLE IMAGE</span>
+        </div>
+        <div class="sample-view">
+          <img
+            src="/images/sample-bracket.png"
+            alt="Sample aluminum mounting bracket on a dark inspection surface"
+            width="1448"
+            height="1086"
+            fetchpriority="high"
+          />
+          <div class="review-region"><span>Surface to review</span><i></i></div>
+          <span class="sample-badge">MANUAL OBSERVATION</span>
+        </div>
+        <div class="inspection-preview-footer">
+          <span><app-icon name="eye" />Look closer. Record what you see.</span
+          ><a href="/workspace?sample=1"
+            >Inspect sample<app-icon name="arrow"
+          /></a>
+        </div>
+      </div>
+    </section>
+    <div class="spec-strip wrap">
+      <div><strong>10</strong><span>Images in one queue</span></div>
+      <div><strong>3</strong><span>Image quality checks</span></div>
+      <div><strong>4</strong><span>Review decisions</span></div>
+      <div><strong>JSON</strong><span>Portable review records</span></div>
+    </div>
+    <section class="section wrap" id="how-it-works">
+      <div class="section-intro">
+        <p class="overline">A COMPLETE REVIEW FLOW</p>
+        <h2>From upload to a record<br />you can hand over.</h2>
+      </div>
+      <div class="steps">
+        <article>
+          <span class="step-number">01</span>
+          <h3>Build your queue.</h3>
+          <p>
+            Drop in your photographs. Move between images from a horizontal
+            filmstrip and zoom in on the details.
+          </p>
+        </article>
+        <article>
+          <span class="step-number">02</span>
+          <h3>Check, then inspect.</h3>
+          <p>
+            See resolution, exposure, and edge detail checks. Record visible
+            observations and your own notes.
+          </p>
+        </article>
+        <article>
+          <span class="step-number">03</span>
+          <h3>Make the call.</h3>
+          <p>
+            Accept, reject, escalate, or request a retake. Complete each review
+            and export the finished records together.
+          </p>
+        </article>
+      </div>
+    </section>
+    <section class="inspection-explainer wrap">
+      <div>
+        <p class="overline">KNOW WHAT THE IMAGE CAN TELL YOU</p>
+        <h2>Image quality is measured.<br />The decision is yours.</h2>
+        <p>
+          A dark or blurry photograph can hide the detail you need. Quality
+          checks help you decide whether an image supports a review or needs to
+          be taken again.
+        </p>
+        <p>
+          This release measures photographic readiness. It does not
+          automatically diagnose defects.
+        </p>
+      </div>
+      <div class="check-list">
+        <div>
+          <span>01</span>
+          <h3>Resolution</h3>
+          <p>Enough pixels to see the part clearly.</p>
+        </div>
+        <div>
+          <span>02</span>
+          <h3>Exposure</h3>
+          <p>Light levels that preserve useful detail.</p>
+        </div>
+        <div>
+          <span>03</span>
+          <h3>Edge detail</h3>
+          <p>A sharpness measure to support your review.</p>
+        </div>
+      </div>
+    </section>
+    <section class="section faq wrap" id="questions">
+      <div>
+        <p class="overline">BEFORE YOUR FIRST REVIEW</p>
+        <h2>Keep the process clear.</h2>
+      </div>
+      <div>
+        <details>
+          <summary>Does this detect defects automatically?</summary>
+          <p>
+            No validated defect model is enabled in this release. The
+            application measures image quality. You inspect the photograph,
+            record observations, and make the review decision.
+          </p>
+        </details>
+        <details>
+          <summary>Are my photographs stored?</summary>
+          <p>
+            Photographs are sent to the quality API for processing in memory.
+            This application does not save them on the server. Photos and draft
+            reviews remain in the current tab until you leave or close it.
+          </p>
+        </details>
+        <details>
+          <summary>What is in the export?</summary>
+          <p>
+            The JSON export contains completed reviews with image measurements,
+            your observations, notes, decision, and review time. It does not
+            include the original image files. Export before closing your
+            session.
+          </p>
+        </details>
+        <details>
+          <summary>What can I use the sample for?</summary>
+          <p>
+            The generated bracket image lets you try uploading, quality checks,
+            manual observations, and export. It is an illustration for exploring
+            the workflow, not validated inspection or training data.
+          </p>
+        </details>
+      </div>
+    </section>
+    <section class="closing wrap">
+      <div>
+        <p class="overline">READY WHEN YOU ARE</p>
+        <h2>Bring the details into focus.</h2>
+      </div>
+      <a class="button solid" href="/workspace"
+        >Open inspection desk<app-icon name="arrow"
+      /></a>
+    </section>
+  </main>
+  <footer class="site-footer wrap">
+    <span>Inspection Desk</span><span>Built by Swarneil Pradhan</span
+    ><a href="https://github.com/Swarneil1905/visual-inspection-desk"
+      >Source code<app-icon name="arrow"
+    /></a>
+  </footer>
+</div>
+}

@@ -2,6 +2,8 @@
 
 Review product return photographs, check whether the images are usable, and export a structured inspection record. An optional trained model can add a defect prediction alongside the human review.
 
+The root URL opens the product homepage. Choose the main action to enter the application at `/workspace`. The homepage explains the workflow, data handling, and current capabilities before a session begins.
+
 [Live demo](https://visual-inspection-desk-production.up.railway.app) · [CI](https://github.com/Swarneil1905/visual-inspection-desk/actions) · [Architecture](docs/architecture.md) · [Verification notes](docs/verification.md) · [MIT license](LICENSE)
 
 Add up to 10 photographs to a review queue, zoom each image, record observations and choose a decision. Completed reviews can be exported together as JSON. Photos and drafts stay in the current tab and are cleared when it closes.
@@ -138,10 +140,10 @@ The synthetic image at `tests/fixtures/calibration.png` is a quality test fixtur
 | `native/` | C++ measurements, CMake configuration and tests |
 | `ml/` | PyTorch training, export and model contract tests |
 | `tests/` | HTTP integration tests and a synthetic image fixture |
-| `docs/` | Architecture, design provenance and verification details |
+| `docs/` | Architecture and verification details |
 
 The public demo uses bounded uploads and a rate limited gateway. Representative dataset validation remains required for meaningful defect predictions. See [deployment and operations](docs/deployment.md).
 
 ## License
 
-Original project code is licensed under the [MIT License](LICENSE), copyright © 2026 Swarneil Pradhan. Bundled DM Sans and Instrument Serif fonts retain their SIL Open Font Licenses in [`frontend/public/fonts`](frontend/public/fonts). Third party dependencies retain their respective licenses.
+Original project code is licensed under the [MIT License](LICENSE), copyright © 2026 Swarneil Pradhan. Bundled fonts retain their SIL Open Font Licenses in [`frontend/public/fonts`](frontend/public/fonts). Third party dependencies retain their respective licenses.

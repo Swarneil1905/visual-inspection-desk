@@ -1,10 +1,17 @@
-import { Component } from "@angular/core";
+import { Component, signal } from "@angular/core";
 import { InspectionComponent } from "./inspection";
+import { IconComponent } from "./icon";
+
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [InspectionComponent],
-  template: `<a class="skip-link" href="#workspace">Skip to workspace</a>
-    <main id="workspace"><inspection-desk /></main>`,
+  imports: [InspectionComponent, IconComponent],
+  templateUrl: "./app.html",
+  styleUrl: "./home.css",
 })
-export class AppComponent {}
+export class AppComponent {
+  skipHref = location.pathname + location.search + "#main";
+  workspace = window.location.pathname.replace(/\/$/, "") === "/workspace";
+  menu = signal(false);
+  example = signal(0);
+}

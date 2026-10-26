@@ -1,6 +1,7 @@
 import { Component, Input } from "@angular/core";
 
 const paths: Record<string, string> = {
+  eye: "M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6Zm6 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0",
   arrow: "M4 10h12m-5-5 5 5-5 5",
   chevron: "m7 4 6 6-6 6",
   mic: "M7 4a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V4Zm-3 5v1a6 6 0 0 0 12 0V9m-6 7v3m-3 0h6",

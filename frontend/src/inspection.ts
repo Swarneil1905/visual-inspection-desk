@@ -1,4 +1,4 @@
-import { Component, signal, OnDestroy } from "@angular/core";
+import { Component, signal, OnDestroy, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { IconComponent } from "./icon";
 import { api } from "./api";
@@ -35,8 +35,31 @@ interface Inspection {
   imports: [FormsModule, IconComponent],
   templateUrl: "./inspection.html",
 })
-export class InspectionComponent implements OnDestroy {
+export class InspectionComponent implements OnDestroy, OnInit {
   entries = signal<Inspection[]>([]);
+  private disposed = false;
+  ngOnInit() {
+    if (new URLSearchParams(location.search).get("sample") === "1")
+      void this.loadSample();
+  }
+  async loadSample() {
+    try {
+      const response = await fetch("/images/sample-bracket.png");
+      if (!response.ok)
+        throw new Error(
+          "The sample image could not be loaded. Try uploading your own image.",
+        );
+      const blob = await response.blob();
+      if (!this.disposed)
+        this.add([
+          new File([blob], "Sample bracket (generated).png", {
+            type: "image/png",
+          }),
+        ]);
+    } catch (e) {
+      if (!this.disposed) this.error.set((e as Error).message);
+    }
+  }
   activeId = signal("");
   zoom = signal(1);
   error = signal("");
@@ -203,6 +226,7 @@ export class InspectionComponent implements OnDestroy {
     );
   }
   ngOnDestroy() {
+    this.disposed = true;
     this.entries().forEach((row) => URL.revokeObjectURL(row.url));
   }
 }
