@@ -16,7 +16,35 @@ interface Quality {
     score?: number;
   };
 }
+interface Recovery {
+  policyVersion: string;
+  route: string;
+  label: string;
+  estimatedRecovery: number | null;
+  reasons: string[];
+  options: {
+    route: string;
+    label: string;
+    gross: number;
+    costs: number;
+    net: number;
+    reason: string;
+  }[];
+  nextAction: string;
+  basis: string;
+}
 interface Inspection {
+  caseId: string;
+  functionalStatus: string;
+  safetyConcern: boolean;
+  repairable: boolean;
+  resaleValue: number | null;
+  asIsValue: number | null;
+  repairCost: number | null;
+  handlingCost: number | null;
+  salvageValue: number | null;
+  assessment: Recovery | null;
+  assessmentBusy: boolean;
   id: string;
   file: File;
   url: string;
@@ -51,11 +79,14 @@ export class InspectionComponent implements OnDestroy, OnInit {
         );
       const blob = await response.blob();
       if (!this.disposed)
-        this.add([
-          new File([blob], "Sample bracket (generated).png", {
-            type: "image/png",
-          }),
-        ]);
+        this.add(
+          [
+            new File([blob], "Sample bracket (generated).png", {
+              type: "image/png",
+            }),
+          ],
+          true,
+        );
     } catch (e) {
       if (!this.disposed) this.error.set((e as Error).message);
     }
@@ -85,7 +116,7 @@ export class InspectionComponent implements OnDestroy, OnInit {
     event.preventDefault();
     this.add(Array.from(event.dataTransfer?.files || []));
   }
-  add(files: File[]) {
+  add(files: File[], sample = false) {
     this.error.set("");
     this.notice.set("");
     const added: Inspection[] = [];
@@ -107,6 +138,17 @@ export class InspectionComponent implements OnDestroy, OnInit {
       }
       added.push({
         id: crypto.randomUUID(),
+        caseId: sample ? "EXAMPLE-001" : "",
+        functionalStatus: "unknown",
+        safetyConcern: false,
+        repairable: false,
+        resaleValue: sample ? 80 : null,
+        asIsValue: sample ? 40 : null,
+        repairCost: sample ? 15 : null,
+        handlingCost: sample ? 5 : null,
+        salvageValue: sample ? 2 : null,
+        assessment: null,
+        assessmentBusy: false,
         file,
         url: URL.createObjectURL(file),
         name: file.name.replace(/\.[^.]+$/, "").slice(0, 120),
@@ -166,7 +208,53 @@ export class InspectionComponent implements OnDestroy, OnInit {
     }
     this.dirty(row);
   }
+  dispositionInput(row: Inspection) {
+    return {
+      qualityReady: !!row.quality?.checks.every((x) => x.passed),
+      observations: row.observations,
+      functionalStatus: row.functionalStatus,
+      safetyConcern: row.safetyConcern,
+      repairable: row.repairable,
+      resaleValue: row.resaleValue,
+      asIsValue: row.asIsValue,
+      repairCost: row.repairCost,
+      handlingCost: row.handlingCost,
+      salvageValue: row.salvageValue,
+    };
+  }
+  async calculate(row: Inspection) {
+    if (row.assessmentBusy || !row.quality) return;
+    row.assessmentBusy = true;
+    row.error = "";
+    row.assessment = null;
+    row.reviewedAt = "";
+    row.decision = "";
+    const input = this.dispositionInput(row);
+    const snapshot = JSON.stringify(input);
+    this.entries.update((rows) => [...rows]);
+    try {
+      const result = await api<Recovery>("inspection/disposition", input);
+      if (JSON.stringify(this.dispositionInput(row)) !== snapshot) return;
+      row.assessment = result;
+      row.decision = result.route;
+    } catch (e) {
+      row.error = (e as Error).message;
+    } finally {
+      row.assessmentBusy = false;
+      this.entries.update((rows) => [...rows]);
+    }
+  }
+  money(value: number | null) {
+    return value === null
+      ? "Pending"
+      : new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(value);
+  }
   dirty(row: Inspection) {
+    row.assessment = null;
+    row.decision = "";
     row.reviewedAt = "";
     this.notice.set("");
     this.entries.update((rows) => [...rows]);
@@ -174,10 +262,13 @@ export class InspectionComponent implements OnDestroy, OnInit {
   complete(row: Inspection) {
     if (
       !row.quality ||
+      !row.assessment ||
+      !row.caseId.trim() ||
       row.busy ||
       !row.name.trim() ||
       !row.decision ||
-      (!row.observations.length && row.decision !== "retake")
+      (!row.observations.length &&
+        !["retake", "inspect", "quarantine"].includes(row.decision))
     )
       return;
     row.reviewedAt = new Date().toISOString();
@@ -198,7 +289,11 @@ export class InspectionComponent implements OnDestroy, OnInit {
     const records = this.entries()
       .filter((x) => x.reviewedAt)
       .map((row) => ({
-        schema_version: 2,
+        schema_version: 3,
+        case_id: row.caseId,
+        financial_inputs: this.dispositionInput(row),
+        disposition: row.assessment,
+        currency: "USD",
         item_name: row.name.trim(),
         reviewed_at: row.reviewedAt,
         image_name: row.file.name,
@@ -206,7 +301,7 @@ export class InspectionComponent implements OnDestroy, OnInit {
         human_observations: row.observations,
         notes: row.notes,
         decision: row.decision,
-        decision_source: "human_review",
+        decision_source: "reviewer_approved_policy_calculation",
         automated_defect_detection:
           row.quality?.prediction.status === "suggestion",
       }));

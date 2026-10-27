@@ -45,6 +45,10 @@ app.MapPost("/api/inspection/quality", async (HttpRequest request, DefectModel m
     var prediction = model.Predict(bitmap, resolution && exposure && detail, codec.EncodedOrigin == SKEncodedOrigin.TopLeft);
     return Results.Ok(new { width = info.Width, height = info.Height, brightness = metrics.Brightness, sharpness = metrics.Sharpness, checks, prediction, disclaimer = "Image readiness heuristics are not defect detection. A human must review the photograph and any model suggestion." });
 }).RequireRateLimiting("images").DisableAntiforgery();
+app.MapPost("/api/inspection/disposition", (DispositionInput input) => {
+    try { return Results.Ok(Disposition.Evaluate(input)); }
+    catch (ArgumentException e) { return Results.BadRequest(new { error = e.Message }); }
+}).RequireRateLimiting("images");
 app.Run();
 
 [StructLayout(LayoutKind.Sequential)] public struct QualityMetrics { public double Brightness; public double Sharpness; }

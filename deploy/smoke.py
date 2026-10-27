@@ -53,4 +53,11 @@ else:
     assert all(p["price"] <= 40 and p["category"] == "Workspace" for p in json.loads(body)["products"])
     status, _, _ = request("/api/catalog?budget=NaN")
     assert status == 400
+decision={"qualityReady":True,"observations":["Visible surface damage"],"functionalStatus":"pass","safetyConcern":False,"repairable":True,"resaleValue":80,"asIsValue":40,"repairCost":15,"handlingCost":5,"salvageValue":2}
+status,body,_=request("/api/inspection/disposition",json.dumps(decision).encode(),{"Content-Type":"application/json"})
+result=json.loads(body)
+assert status==200 and result["route"]=="refurbish" and result["estimatedRecovery"]==60,(status,body)
+decision["safetyConcern"]=True
+status,body,_=request("/api/inspection/disposition",json.dumps(decision).encode(),{"Content-Type":"application/json"})
+assert status==200 and json.loads(body)["route"]=="quarantine",(status,body)
 print(kind + ": gateway, security headers, health and application flow passed")

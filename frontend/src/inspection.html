@@ -5,7 +5,7 @@
         class="brand-light"
         >Desk</span
       ></a
-    ><span class="workspace-label">IMAGE REVIEW WORKSPACE</span
+    ><span class="workspace-label">RETURNS DISPOSITION WORKSPACE</span
     ><button class="primary" (click)="download()" [disabled]="reviewed() === 0">
       <app-icon name="download" />Export reviews<span class="button-count"
         >{{reviewed()}}</span
@@ -14,7 +14,7 @@
   </header>
   <div class="desk-strip">
     <span
-      ><i class="status-dot"></i>Manual review
+      ><i class="status-dot"></i>Return processing
       <span class="strip-divider">/</span> Image quality checks</span
     ><span>Session only <app-icon name="info" /></span>
   </div>
@@ -160,6 +160,14 @@
       </div>
       @if(active(); as row){
       <div class="record-fields">
+        <label for="case-id">Return reference</label
+        ><input
+          id="case-id"
+          [(ngModel)]="row.caseId"
+          (ngModelChange)="dirty(row)"
+          maxlength="100"
+          placeholder="Your internal return or SKU reference"
+        />
         <label for="item-name">Item name</label
         ><input
           id="item-name"
@@ -208,35 +216,151 @@
           >}
         </section>
         <section class="check-section">
-          <h3><span>03</span>Review decision</h3>
-          <label class="sr-only" for="decision">Review decision</label
+          <h3><span>03</span>Functional and safety checks</h3>
+          <label for="functional">Physical functional test</label
           ><select
-            id="decision"
-            [(ngModel)]="row.decision"
+            id="functional"
+            [(ngModel)]="row.functionalStatus"
             (ngModelChange)="dirty(row)"
           >
-            <option value="">Select a decision</option>
-            <option value="accept">Accept item</option>
-            <option value="reject">Reject item</option>
-            <option value="escalate">Escalate for another review</option>
-            <option value="retake">Request new photograph</option></select
-          ><label for="inspection-notes">Notes</label
+            <option value="unknown">Not yet tested</option>
+            <option value="pass">Passed</option>
+            <option value="fail">Failed</option>
+          </select>
+          <label class="checkbox-row"
+            ><input
+              type="checkbox"
+              [(ngModel)]="row.safetyConcern"
+              (ngModelChange)="dirty(row)"
+            /><span>Safety concern or unsafe to resell</span></label
+          >
+          <label class="checkbox-row"
+            ><input
+              type="checkbox"
+              [(ngModel)]="row.repairable"
+              (ngModelChange)="dirty(row)"
+            /><span>Repair is feasible and its cost is known</span></label
+          >
+        </section>
+        <section class="check-section recovery-inputs">
+          <h3><span>04</span>Recovery estimates in USD</h3>
+          <p class="muted">
+            Enter your expected proceeds and costs. The sample uses illustrative
+            amounts; replace them for a real return.
+          </p>
+          <label for="resale"
+            >Resale value after restoration<input
+              id="resale"
+              type="number"
+              min="0"
+              max="100000"
+              step="0.01"
+              [(ngModel)]="row.resaleValue"
+              (ngModelChange)="dirty(row)"
+          /></label>
+          <label for="as-is"
+            >Resale value in current condition<input
+              id="as-is"
+              type="number"
+              min="0"
+              max="100000"
+              step="0.01"
+              [(ngModel)]="row.asIsValue"
+              (ngModelChange)="dirty(row)"
+          /></label>
+          <label for="repair"
+            >Repair cost<input
+              id="repair"
+              type="number"
+              min="0"
+              max="100000"
+              step="0.01"
+              [(ngModel)]="row.repairCost"
+              (ngModelChange)="dirty(row)"
+          /></label>
+          <label for="handling"
+            >Handling cost per route<input
+              id="handling"
+              type="number"
+              min="0"
+              max="100000"
+              step="0.01"
+              [(ngModel)]="row.handlingCost"
+              (ngModelChange)="dirty(row)"
+          /></label>
+          <label for="salvage"
+            >Salvage proceeds<input
+              id="salvage"
+              type="number"
+              min="0"
+              max="100000"
+              step="0.01"
+              [(ngModel)]="row.salvageValue"
+              (ngModelChange)="dirty(row)"
+          /></label>
+          <button
+            class="primary calculate-disposition"
+            (click)="calculate(row)"
+            [disabled]="!row.quality||row.assessmentBusy"
+          >
+            {{row.assessmentBusy?'Calculating...':'Recommend a disposition'}}
+          </button>
+        </section>
+        @if(row.assessment; as assessment){
+        <section class="disposition-report" aria-live="polite">
+          <p class="eyebrow">RECOMMENDED NEXT ACTION</p>
+          <h2>{{assessment.label}}</h2>
+          <p class="recovery-value">{{money(assessment.estimatedRecovery)}}</p>
+          <p class="muted">Estimated net recovery per item</p>
+          @for(reason of assessment.reasons;track reason){
+          <p>{{reason}}</p>
+          } @if(assessment.options.length){
+          <table>
+            <caption>
+              Eligible routes: proceeds minus costs
+            </caption>
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>Gross</th>
+                <th>Costs</th>
+                <th>Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for(option of assessment.options;track option.route){
+              <tr>
+                <td>{{option.label}}</td>
+                <td>{{money(option.gross)}}</td>
+                <td>{{money(option.costs)}}</td>
+                <td>{{money(option.net)}}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+          }
+          <p><strong>After approval:</strong> {{assessment.nextAction}}</p>
+          <p class="muted">{{assessment.basis}}</p>
+        </section>
+        }
+        <section class="check-section">
+          <label for="inspection-notes">Reviewer notes</label
           ><textarea
             id="inspection-notes"
             [(ngModel)]="row.notes"
-            (ngModelChange)="dirty(row)"
+            (ngModelChange)="row.reviewedAt=''"
             rows="3"
             maxlength="2000"
-            placeholder="Location of damage, next action, or reviewer context"
+            placeholder="Evidence, repair quote or follow-up owner"
           ></textarea>
         </section>
         <button
           class="primary complete-button"
-          [disabled]="!row.quality || row.busy || !row.name.trim() || !row.decision || (!row.observations.length && row.decision !== 'retake') || !!row.reviewedAt"
+          [disabled]="!row.assessment || row.busy || !row.name.trim() || !row.caseId.trim() || !!row.reviewedAt"
           (click)="complete(row)"
         >
           <app-icon name="check" />{{row.reviewedAt ? 'Review completed' :
-          'Complete review'}}</button
+          'Approve disposition'}}</button
         ><button class="remove-button" (click)="remove(row)">
           Remove this image
         </button>

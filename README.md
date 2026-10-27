@@ -1,35 +1,39 @@
 # Visual Inspection Desk
 
-A workspace for reviewing product return photographs. Check image quality, document visible issues, choose a disposition and export a review record that another person can inspect.
+A returns disposition workspace for small operations teams. Inspect returned merchandise, compare the recovery value of eligible routes and export a reviewer-approved decision with its evidence and assumptions.
 
-[Open the app](https://visual-inspection-desk-production.up.railway.app) · [GitHub Actions](https://github.com/Swarneil1905/visual-inspection-desk/actions) · [MIT license](LICENSE)
+[Open the app](https://visual-inspection-desk-production.up.railway.app) | [GitHub Actions](https://github.com/Swarneil1905/visual-inspection-desk/actions) | [MIT license](LICENSE)
 
-## Watch the walkthrough
+## See the outcome
 
-[![Visual Inspection Desk walkthrough: check a photograph, record observations and export a review](docs/assets/walkthrough.gif)](docs/assets/walkthrough.mp4)
+[![Return review with a calculated recovery route and approved export](docs/assets/walkthrough.gif)](docs/assets/walkthrough.mp4)
 
-[Watch or download the full video](docs/assets/walkthrough.mp4) (00:00:24.20) · [View a still screenshot](docs/assets/preview.png). This silent recording uses the built in sample photograph and the live image quality API. The inspection decision is made by the reviewer.
+[Watch the short walkthrough](docs/assets/walkthrough.mp4). Recorded against the local MVP build with the real .NET and native image API. The photograph and financial inputs are illustrative.
 
-## Try it in a minute
+## Try it
 
-1. Open the homepage and choose the sample inspection, or upload your own JPEG, PNG or WebP image.
-2. Review resolution, exposure and edge detail beside the photograph.
-3. Record what you can see, choose a decision and add a note.
-4. Complete the review and select **Export reviews** to download the JSON records.
+1. Open the sample return or upload a product photograph. Review resolution, exposure and edge detail.
+2. Record the return reference, visible condition, functional test and any safety concern.
+3. Enter expected resale proceeds, current-condition proceeds, repair cost, handling cost and salvage proceeds in USD.
+4. Select **Recommend a disposition**, inspect the alternatives, then complete and export the review.
 
-The sample is an illustrative image, not a labeled training example. Quality measurements help decide whether a photograph is usable; they do not establish whether a product is damaged.
+For a repairable cosmetic return with $80 resale proceeds, $15 repair cost and $5 handling cost, refurbishment recovers an estimated **$60**. Selling it as-is for $40 recovers $35. The calculation selects the best eligible route; a safety concern overrides the calculation and requires quarantine.
 
-## Current capabilities
+## Decision policy
 
-| Feature | Behavior |
+| Input state | Outcome |
 | --- | --- |
-| Review queue | Up to 10 photographs in the current tab |
-| Quality checks | Resolution, brightness and edge detail measured by the API and native engine |
-| Human review | Observations, notes and accept, reject, escalate or retake decisions |
-| Export | Completed JSON records without embedding photographs |
-| Optional model | ONNX inference with validation checks and abstention support |
+| Safety concern | Quarantine; no recovery estimate |
+| Image readiness check fails | Request new photographs |
+| Missing observations or functional test | Complete the physical check |
+| Clean, functioning item | Restock is eligible |
+| Functioning item with no missing part | Resale with condition disclosure is eligible |
+| Repair feasibility confirmed | Refurbishment is eligible |
+| Other eligible physical assessments | Compare salvage or recycling proceeds |
 
-No validated defect model is loaded in the public app. Automated defect detection requires representative labeled images and validation. Photos and drafts stay in the current browser session; uploads are processed in server memory and are not saved by the API.
+For each eligible route, net recovery is proceeds minus handling and any repair cost. Negative values remain visible. The versioned policy uses reviewer-supplied facts and estimates, not a learned defect model. The exported record includes alternatives, assumptions, notes, approval time. It does not update inventory automatically.
+
+No validated defect model is enabled in the public app. Optional PyTorch-to-ONNX training remains available for a separately validated dataset. Photos and drafts remain in the current tab; image processing happens in server memory without saving uploads. Export before closing the session.
 
 ## How it works
 
@@ -57,7 +61,7 @@ Requires Docker Desktop or Docker Engine with Compose. From the repository root:
 docker compose up --build
 ```
 
-Open **http://localhost:8081**. Upload a photograph, review its quality, record observations and export the result. Stop the stack with `docker compose down`.
+Open **http://localhost:8081**. Review a return, calculate its eligible recovery route, then approve and export the decision. Stop the stack with `docker compose down`.
 
 ## Run without Docker on Windows
 
